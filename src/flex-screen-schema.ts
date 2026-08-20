@@ -81,91 +81,101 @@ const orientationShortcutKeys = [
   "foldedToRightAngleBelowBoard",
 ] as const
 
+const flexScreenModelPropsShape = {
+  width: positiveModelLengthSchema.optional(),
+  height: positiveModelLengthSchema.optional(),
+  diagonal: positiveModelLengthSchema.optional(),
+  aspectRatio: flexScreenAspectRatioSchema.optional(),
+  ratio: flexScreenAspectRatioSchema.optional(),
+  defaultDiagonal: positiveModelLengthSchema.optional(),
+
+  orientation: flexScreenOrientationSchema.optional(),
+  sitsFlat: z.boolean().optional(),
+  sitsFlatBelowBoard: z.boolean().optional(),
+  foldedToFaceAboveBoard: z.boolean().optional(),
+  foldedToFaceBelowBoard: z.boolean().optional(),
+  foldsAboveBoard: z.boolean().optional(),
+  foldsBelowBoard: z.boolean().optional(),
+  foldedToRightAngleAboveBoard: z.boolean().optional(),
+  foldedToRightAngleBelowBoard: z.boolean().optional(),
+
+  screenThickness: positiveModelLengthSchema.optional(),
+  bezelInset: nonnegativeModelLengthSchema.optional(),
+  bezelDepth: positiveModelLengthSchema.optional(),
+  activeAreaWidth: positiveModelLengthSchema.optional(),
+  activeAreaHeight: positiveModelLengthSchema.optional(),
+  screenColor: z.string().min(1).optional(),
+  bezelColor: z.string().min(1).optional(),
+  showScreen: z.boolean().optional(),
+
+  flexCableLength: positiveModelLengthSchema.optional(),
+  flexCableWidth: positiveModelLengthSchema.optional(),
+  flexCableThickness: positiveModelLengthSchema.optional(),
+  flexCableColor: z.string().min(1).optional(),
+  conductorCount: z.number().int().positive().optional(),
+  conductorPitch: positiveModelLengthSchema.optional(),
+  conductorWidth: positiveModelLengthSchema.optional(),
+  conductorThickness: positiveModelLengthSchema.optional(),
+  conductorColor: z.string().min(1).optional(),
+  cableEdgeMargin: nonnegativeModelLengthSchema.optional(),
+  exposedContactLength: nonnegativeModelLengthSchema.optional(),
+  showConductors: z.boolean().optional(),
+  showFlexCable: z.boolean().optional(),
+
+  showStiffeners: z.boolean().optional(),
+  stiffenerLength: nonnegativeModelLengthSchema.optional(),
+  stiffenerThickness: positiveModelLengthSchema.optional(),
+  stiffenerColor: z.string().min(1).optional(),
+
+  bendRadius: positiveModelLengthSchema.optional(),
+  bendSegments: z.number().int().min(2).optional(),
+  rightAngleVerticalLead: nonnegativeModelLengthSchema.optional(),
+  distanceAboveBoard: nonnegativeModelLengthSchema.optional(),
+  distanceBelowBoard: nonnegativeModelLengthSchema.optional(),
+  foldDistanceFromConnector: nonnegativeModelLengthSchema.optional(),
+  foldOutset: positiveModelLengthSchema.optional(),
+  foldSegments: z.number().int().min(4).optional(),
+  screenGap: nonnegativeModelLengthSchema.optional(),
+
+  boardTopZ: modelLengthSchema.optional(),
+  boardThickness: positiveModelLengthSchema.optional(),
+  boardClearance: nonnegativeModelLengthSchema.optional(),
+  cableStartX: modelLengthSchema.optional(),
+  cableStartY: modelLengthSchema.optional(),
+  cableStartZ: modelLengthSchema.optional(),
+  cableLateralOffset: modelLengthSchema.optional(),
+
+  screenOffset: modelPointSchema.optional(),
+  screenRotation: modelRotationSchema.optional(),
+  rotation: modelRotationSchema.optional(),
+  offset: modelPointSchema.optional(),
+}
+
+const addOrientationShortcutIssue = (
+  props: Record<string, unknown>,
+  addIssue: (path: string) => void,
+) => {
+  const selectedShortcuts = orientationShortcutKeys.filter(
+    (key) => props[key] === true,
+  )
+  if (selectedShortcuts.length > 1) addIssue(selectedShortcuts[1]!)
+}
+
 /**
  * Canonical, renderer-independent properties for a parameterized FlexScreen.
  * Every length accepts either millimeters as a number or a unit-bearing string
  * and is normalized to millimeters by the schema.
  */
 export const flexScreenModelPropsSchema = z
-  .object({
-    width: positiveModelLengthSchema.optional(),
-    height: positiveModelLengthSchema.optional(),
-    diagonal: positiveModelLengthSchema.optional(),
-    aspectRatio: flexScreenAspectRatioSchema.optional(),
-    ratio: flexScreenAspectRatioSchema.optional(),
-    defaultDiagonal: positiveModelLengthSchema.optional(),
-
-    orientation: flexScreenOrientationSchema.optional(),
-    sitsFlat: z.boolean().optional(),
-    sitsFlatBelowBoard: z.boolean().optional(),
-    foldedToFaceAboveBoard: z.boolean().optional(),
-    foldedToFaceBelowBoard: z.boolean().optional(),
-    foldsAboveBoard: z.boolean().optional(),
-    foldsBelowBoard: z.boolean().optional(),
-    foldedToRightAngleAboveBoard: z.boolean().optional(),
-    foldedToRightAngleBelowBoard: z.boolean().optional(),
-
-    screenThickness: positiveModelLengthSchema.optional(),
-    bezelInset: nonnegativeModelLengthSchema.optional(),
-    bezelDepth: positiveModelLengthSchema.optional(),
-    activeAreaWidth: positiveModelLengthSchema.optional(),
-    activeAreaHeight: positiveModelLengthSchema.optional(),
-    screenColor: z.string().min(1).optional(),
-    bezelColor: z.string().min(1).optional(),
-    showScreen: z.boolean().optional(),
-
-    flexCableLength: positiveModelLengthSchema.optional(),
-    flexCableWidth: positiveModelLengthSchema.optional(),
-    flexCableThickness: positiveModelLengthSchema.optional(),
-    flexCableColor: z.string().min(1).optional(),
-    conductorCount: z.number().int().positive().optional(),
-    conductorPitch: positiveModelLengthSchema.optional(),
-    conductorWidth: positiveModelLengthSchema.optional(),
-    conductorThickness: positiveModelLengthSchema.optional(),
-    conductorColor: z.string().min(1).optional(),
-    cableEdgeMargin: nonnegativeModelLengthSchema.optional(),
-    exposedContactLength: nonnegativeModelLengthSchema.optional(),
-    showConductors: z.boolean().optional(),
-    showFlexCable: z.boolean().optional(),
-
-    showStiffeners: z.boolean().optional(),
-    stiffenerLength: nonnegativeModelLengthSchema.optional(),
-    stiffenerThickness: positiveModelLengthSchema.optional(),
-    stiffenerColor: z.string().min(1).optional(),
-
-    bendRadius: positiveModelLengthSchema.optional(),
-    bendSegments: z.number().int().min(2).optional(),
-    rightAngleVerticalLead: nonnegativeModelLengthSchema.optional(),
-    distanceAboveBoard: nonnegativeModelLengthSchema.optional(),
-    distanceBelowBoard: nonnegativeModelLengthSchema.optional(),
-    foldDistanceFromConnector: nonnegativeModelLengthSchema.optional(),
-    foldOutset: positiveModelLengthSchema.optional(),
-    foldSegments: z.number().int().min(4).optional(),
-    screenGap: nonnegativeModelLengthSchema.optional(),
-
-    boardTopZ: modelLengthSchema.optional(),
-    boardThickness: positiveModelLengthSchema.optional(),
-    boardClearance: nonnegativeModelLengthSchema.optional(),
-    cableStartX: modelLengthSchema.optional(),
-    cableStartY: modelLengthSchema.optional(),
-    cableStartZ: modelLengthSchema.optional(),
-    cableLateralOffset: modelLengthSchema.optional(),
-
-    screenOffset: modelPointSchema.optional(),
-    screenRotation: modelRotationSchema.optional(),
-    rotation: modelRotationSchema.optional(),
-    offset: modelPointSchema.optional(),
-  })
+  .object(flexScreenModelPropsShape)
   .strict()
   .superRefine((props, context) => {
-    const selectedShortcuts = orientationShortcutKeys.filter(
-      (key) => props[key] === true,
-    )
-    if (selectedShortcuts.length <= 1) return
-    context.addIssue({
-      code: "custom",
-      message: "Only one FlexScreen orientation shortcut can be true",
-      path: [selectedShortcuts[1]!],
+    addOrientationShortcutIssue(props, (path) => {
+      context.addIssue({
+        code: "custom",
+        message: "Only one FlexScreen orientation shortcut can be true",
+        path: [path],
+      })
     })
   })
 
@@ -178,10 +188,19 @@ export type FlexScreenModelProps = z.output<typeof flexScreenModelPropsSchema>
 
 export const flexScreenModelDefinitionSchema = z
   .object({
-    type: z.literal("flexscreen"),
-    props: flexScreenModelPropsSchema,
+    fn: z.literal("flexscreen"),
+    ...flexScreenModelPropsShape,
   })
   .strict()
+  .superRefine((model, context) => {
+    addOrientationShortcutIssue(model, (path) => {
+      context.addIssue({
+        code: "custom",
+        message: "Only one FlexScreen orientation shortcut can be true",
+        path: [path],
+      })
+    })
+  })
 
 export type FlexScreenModelDefinition = z.infer<
   typeof flexScreenModelDefinitionSchema

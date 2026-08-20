@@ -1,33 +1,36 @@
+import type { ModelDefinition } from "./flex-screen-schema"
+import { parseFlexScreenModelParams } from "./parse-flex-screen-model-string"
 import {
-  flexScreenModelDefinitionSchema,
-  type ModelDefinition,
-} from "./flex-screen-schema"
-import {
-  isFlexScreenModelString,
-  parseFlexScreenModelString,
-} from "./parse-flex-screen-model-string"
+  parseModelStringParams,
+  type RawModelprinterParams,
+} from "./parse-model-string"
 
-export const parseModelString = (value: string): ModelDefinition => {
-  if (isFlexScreenModelString(value)) {
-    return flexScreenModelDefinitionSchema.parse({
-      type: "flexscreen",
-      props: parseFlexScreenModelString(value),
-    })
-  }
-  const modelName = value.split("_", 1)[0] || value
-  throw new Error(`Unsupported modelprinter model "${modelName}"`)
+const modelFunctions = {
+  flexscreen: parseFlexScreenModelParams,
 }
 
-export const isModelString = (value: string): boolean =>
-  isFlexScreenModelString(value)
+const modelParamsToJson = (params: RawModelprinterParams): ModelDefinition => {
+  const modelFunction = modelFunctions[params.fn as keyof typeof modelFunctions]
+  if (modelFunction) {
+    return modelFunction(params)
+  }
+  throw new Error(`Unsupported modelprinter function "${params.fn}"`)
+}
+
+export const string = (value: string) => {
+  const params = parseModelStringParams(value)
+  return {
+    params: () => params,
+    json: () => modelParamsToJson(params),
+  }
+}
+
+export const parseModelString = (value: string): ModelDefinition =>
+  string(value).json()
 
 export const modelprinter = {
-  parse: parseModelString,
-  string: (value: string) => ({
-    json: () => parseModelString(value),
-    model: () => parseModelString(value),
-    props: () => parseModelString(value).props,
-  }),
+  string,
+  getModelNames: () => Object.keys(modelFunctions),
 }
 
 /** Compact alias matching footprinter's familiar `fp.string(...)` API. */

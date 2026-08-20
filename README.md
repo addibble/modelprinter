@@ -19,16 +19,22 @@ const model = modelprinter
   .json()
 
 // {
-//   type: "flexscreen",
-//   props: {
-//     width: 40,
-//     height: 22.5,
-//     flexCableLength: 60,
-//     orientation: "foldedToFaceAboveBoard",
-//     distanceAboveBoard: 20,
-//     foldOutset: 6,
-//   },
+//   fn: "flexscreen",
+//   width: 40,
+//   height: 22.5,
+//   flexCableLength: 60,
+//   orientation: "foldedToFaceAboveBoard",
+//   distanceAboveBoard: 20,
+//   foldOutset: 6,
 // }
+```
+
+As with footprinter, `.params()` exposes the unvalidated builder parameters so
+callers can inspect `fn` before choosing a renderer:
+
+```ts
+modelprinter.string("flexscreen_w40mm_foldsabove").params()
+// { flexscreen: true, fn: "flexscreen", w: "40mm", foldsabove: true, ... }
 ```
 
 ## Zod schemas

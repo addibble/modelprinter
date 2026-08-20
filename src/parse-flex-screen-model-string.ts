@@ -1,11 +1,10 @@
 import {
-  flexScreenModelPropsSchema,
-  modelLengthSchema,
+  flexScreenModelDefinitionSchema,
+  type FlexScreenModelDefinition,
   type FlexScreenModelProps,
   type FlexScreenOrientation,
 } from "./flex-screen-schema"
-
-const PREFIX = "flexscreen"
+import type { RawModelprinterParams } from "./parse-model-string"
 
 const orientationTokens: Record<string, FlexScreenOrientation> = {
   sitsflat: "sitsFlat",
@@ -65,11 +64,18 @@ const lengthProperties = {
   cableLateralOffset: ["cablelateraloffset", "lateraloffset"],
 } satisfies Partial<Record<keyof FlexScreenModelProps, readonly string[]>>
 
-const integerProperties = {
-  conductorCount: ["conductorcount", "conductors"],
-  bendSegments: ["bendsegments"],
-  foldSegments: ["foldsegments"],
-} satisfies Partial<Record<keyof FlexScreenModelProps, readonly string[]>>
+const lengthTokenToProperty = Object.fromEntries(
+  Object.entries(lengthProperties).flatMap(([property, tokens]) =>
+    tokens.map((token) => [token, property]),
+  ),
+)
+
+const integerTokenToProperty: Record<string, keyof FlexScreenModelProps> = {
+  conductorcount: "conductorCount",
+  conductors: "conductorCount",
+  bendsegments: "bendSegments",
+  foldsegments: "foldSegments",
+}
 
 const booleanTokens = {
   showscreen: ["showScreen", true],
@@ -90,31 +96,8 @@ const colorProperties = {
   stiffenercolor: "stiffenerColor",
 } as const
 
-const numericPrefixPattern = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/i
-
-const parseLength = (value: string, token: string): number => {
-  const result = modelLengthSchema.safeParse(value)
-  if (!result.success) {
-    throw new Error(`Invalid length in FlexScreen token "${token}"`)
-  }
-  return result.data
-}
-
-const readAliasedValue = (
-  token: string,
-  aliases: readonly string[],
-): string | undefined => {
-  for (const alias of [...aliases].sort((a, b) => b.length - a.length)) {
-    const remainder = token.slice(alias.length)
-    if (token.startsWith(alias) && numericPrefixPattern.test(remainder)) {
-      return remainder
-    }
-  }
-  return undefined
-}
-
-const parseAspectRatio = (value: string): number | `${number}:${number}` => {
-  const normalized = value.replace("x", ":")
+const parseAspectRatio = (value: unknown): number | `${number}:${number}` => {
+  const normalized = String(value).toLowerCase().replace("x", ":")
   if (normalized.includes(":")) {
     const [width, height, extra] = normalized.split(":")
     const numericWidth = Number(width)
@@ -126,39 +109,49 @@ const parseAspectRatio = (value: string): number | `${number}:${number}` => {
       numericWidth <= 0 ||
       numericHeight <= 0
     ) {
-      throw new Error(`Invalid FlexScreen aspect ratio "${value}"`)
+      throw new Error(`Invalid FlexScreen aspect ratio "${String(value)}"`)
     }
     return `${numericWidth}:${numericHeight}` as `${number}:${number}`
   }
   const numeric = Number(normalized)
   if (!Number.isFinite(numeric) || numeric <= 0) {
-    throw new Error(`Invalid FlexScreen aspect ratio "${value}"`)
+    throw new Error(`Invalid FlexScreen aspect ratio "${String(value)}"`)
   }
   return numeric
 }
 
-export const isFlexScreenModelString = (value: string): boolean =>
-  value.toLowerCase() === PREFIX || value.toLowerCase().startsWith(`${PREFIX}_`)
+const unwrapFunctionValue = (value: unknown, token: string): string => {
+  if (typeof value !== "string" || !/^\(.+\)$/.test(value)) {
+    throw new Error(`FlexScreen token "${token}" requires a value in (...)`)
+  }
+  return value.slice(1, -1)
+}
 
-export const parseFlexScreenModelString = (
-  value: string,
-): FlexScreenModelProps => {
-  if (!isFlexScreenModelString(value)) {
-    throw new Error(`FlexScreen model strings must start with "${PREFIX}"`)
+const assertBareToken = (value: unknown, token: string) => {
+  if (value !== true) {
+    throw new Error(`FlexScreen token "${token}" does not accept a value`)
+  }
+}
+
+export const parseFlexScreenModelParams = (
+  rawParams: RawModelprinterParams,
+): FlexScreenModelDefinition => {
+  if (rawParams.fn !== "flexscreen") {
+    throw new Error(`Expected FlexScreen params, got "${rawParams.fn}"`)
   }
 
   const props: Record<string, unknown> = {}
   let orientation: FlexScreenOrientation | undefined
-  let relativeDistance: number | undefined
+  let relativeDistance: unknown
 
-  for (const originalToken of value.split("_").slice(1)) {
-    if (!originalToken) {
-      throw new Error("FlexScreen model strings cannot contain empty tokens")
+  for (const [token, value] of Object.entries(rawParams)) {
+    if (token === "fn" || token === "string" || token === "flexscreen") {
+      continue
     }
-    const token = originalToken.toLowerCase()
 
     const tokenOrientation = orientationTokens[token]
     if (tokenOrientation) {
+      assertBareToken(value, token)
       if (orientation && orientation !== tokenOrientation) {
         throw new Error(
           "A FlexScreen model string can only set one orientation",
@@ -170,63 +163,48 @@ export const parseFlexScreenModelString = (
     }
 
     if (token in booleanTokens) {
+      assertBareToken(value, token)
       const [property, enabled] =
         booleanTokens[token as keyof typeof booleanTokens]
       props[property] = enabled
       continue
     }
 
-    const colorMatch = originalToken.match(/^([a-z]+)\((.+)\)$/i)
-    if (colorMatch) {
-      const property =
-        colorProperties[
-          colorMatch[1]!.toLowerCase() as keyof typeof colorProperties
-        ]
-      if (property) {
-        props[property] = colorMatch[2]!
-        continue
-      }
-    }
-
-    if (token.startsWith("ratio") && token.length > "ratio".length) {
-      props.aspectRatio = parseAspectRatio(token.slice("ratio".length))
+    const colorProperty = colorProperties[token as keyof typeof colorProperties]
+    if (colorProperty) {
+      props[colorProperty] = unwrapFunctionValue(value, token)
       continue
     }
 
-    let matched = false
-    for (const [property, aliases] of Object.entries(lengthProperties)) {
-      const rawValue = readAliasedValue(token, aliases)
-      if (rawValue === undefined) continue
-      props[property] = parseLength(rawValue, originalToken)
-      matched = true
-      break
-    }
-    if (matched) continue
-
-    if (token.startsWith("distance") && token.length > "distance".length) {
-      relativeDistance = parseLength(
-        token.slice("distance".length),
-        originalToken,
-      )
+    if (token === "ratio") {
+      props.aspectRatio = parseAspectRatio(value)
       continue
     }
 
-    for (const [property, aliases] of Object.entries(integerProperties)) {
-      const rawValue = readAliasedValue(token, aliases)
-      if (rawValue === undefined) continue
-      const parsed = Number(rawValue)
+    const lengthProperty = lengthTokenToProperty[token]
+    if (lengthProperty) {
+      props[lengthProperty] = value
+      continue
+    }
+
+    if (token === "distance") {
+      relativeDistance = value
+      continue
+    }
+
+    const integerProperty = integerTokenToProperty[token]
+    if (integerProperty) {
+      const parsed = Number(value)
       if (!Number.isInteger(parsed) || parsed < 1) {
         throw new Error(
-          `Invalid positive integer in FlexScreen token "${originalToken}"`,
+          `Invalid positive integer in FlexScreen token "${token}${String(value)}"`,
         )
       }
-      props[property] = parsed
-      matched = true
-      break
+      props[integerProperty] = parsed
+      continue
     }
-    if (matched) continue
 
-    throw new Error(`Unknown FlexScreen model token "${originalToken}"`)
+    throw new Error(`Unknown FlexScreen model token "${token}${String(value)}"`)
   }
 
   if (relativeDistance !== undefined) {
@@ -241,5 +219,5 @@ export const parseFlexScreenModelString = (
     }
   }
 
-  return flexScreenModelPropsSchema.parse(props)
+  return flexScreenModelDefinitionSchema.parse({ fn: "flexscreen", ...props })
 }

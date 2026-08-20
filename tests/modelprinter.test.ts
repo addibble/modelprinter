@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  flexScreenModelPropsSchema,
-  modelprinter,
-  parseFlexScreenModelString,
-  parseModelString,
-} from "../src"
+import { flexScreenModelPropsSchema, mp, parseModelString } from "../src"
 
 describe("FlexScreen model schema", () => {
   test("normalizes unit-bearing properties to millimeters", () => {
@@ -38,12 +33,29 @@ describe("FlexScreen model schema", () => {
   })
 })
 
-describe("FlexScreen model strings", () => {
+describe("footprinter-style model strings", () => {
   const source =
     "flexscreen_w40mm_h22.5mm_flex60mm_foldsabove_distance20mm_foldstart9mm_outset6mm_conductors10"
 
-  test("parses the initial flexscreen grammar", () => {
-    expect(parseFlexScreenModelString(source)).toEqual({
+  test("exposes the raw function and modifiers through params()", () => {
+    expect(mp.string(source).params()).toEqual({
+      flexscreen: true,
+      fn: "flexscreen",
+      w: "40mm",
+      h: "22.5mm",
+      flex: "60mm",
+      foldsabove: true,
+      distance: "20mm",
+      foldstart: "9mm",
+      outset: "6mm",
+      conductors: "10",
+      string: source,
+    })
+  })
+
+  test("returns flat, validated JSON with fn", () => {
+    expect(mp.string(source).json()).toEqual({
+      fn: "flexscreen",
       width: 40,
       height: 22.5,
       flexCableLength: 60,
@@ -55,23 +67,24 @@ describe("FlexScreen model strings", () => {
     })
   })
 
-  test("exposes a footprinter-like API", () => {
-    expect(modelprinter.string(source).json()).toEqual({
-      type: "flexscreen",
-      props: parseFlexScreenModelString(source),
+  test("can inspect fn before function-specific validation", () => {
+    expect(mp.string("soic8_w5mm").params()).toMatchObject({
+      fn: "soic",
+      num_pins: 8,
+      w: "5mm",
     })
-    expect(modelprinter.string(source).props().distanceAboveBoard).toBe(20)
+    expect(mp.string("0402").params().fn).toBe("0402")
   })
 
-  test("rejects typos, ambiguous distance, and unsupported models", () => {
+  test("rejects typos, ambiguous distance, and unsupported functions", () => {
     expect(() =>
-      parseFlexScreenModelString("flexscreen_foldsabove_distnace20mm"),
+      mp.string("flexscreen_foldsabove_distnace20mm").json(),
     ).toThrow('Unknown FlexScreen model token "distnace20mm"')
-    expect(() =>
-      parseFlexScreenModelString("flexscreen_sitsflat_distance20mm"),
-    ).toThrow('The "distance" token requires foldsabove or foldsbelow')
+    expect(() => mp.string("flexscreen_sitsflat_distance20mm").json()).toThrow(
+      'The "distance" token requires foldsabove or foldsbelow',
+    )
     expect(() => parseModelString("motor_w20mm")).toThrow(
-      'Unsupported modelprinter model "motor"',
+      'Unsupported modelprinter function "motor"',
     )
   })
 })
