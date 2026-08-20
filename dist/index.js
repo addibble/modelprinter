@@ -37,7 +37,7 @@ var aspectRatioStringSchema = z.string().refine((value) => {
   const width = Number(parts[0]);
   const height = Number(parts[1]);
   return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
-}, 'Aspect ratio must look like "16:9"');
+}, 'Aspect ratio must look like "16:9"').transform((value) => value);
 var flexScreenAspectRatioSchema = z.union([
   positiveFiniteNumberSchema,
   aspectRatioStringSchema,

@@ -38,15 +38,21 @@ export const flexScreenOrientationSchema = z.enum([
 
 const positiveFiniteNumberSchema = z.number().finite().positive()
 
-const aspectRatioStringSchema = z.string().refine((value) => {
-  const parts = value.split(":")
-  if (parts.length !== 2) return false
-  const width = Number(parts[0])
-  const height = Number(parts[1])
-  return (
-    Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0
-  )
-}, 'Aspect ratio must look like "16:9"')
+const aspectRatioStringSchema = z
+  .string()
+  .refine((value) => {
+    const parts = value.split(":")
+    if (parts.length !== 2) return false
+    const width = Number(parts[0])
+    const height = Number(parts[1])
+    return (
+      Number.isFinite(width) &&
+      Number.isFinite(height) &&
+      width > 0 &&
+      height > 0
+    )
+  }, 'Aspect ratio must look like "16:9"')
+  .transform((value) => value as `${number}:${number}`)
 
 export const flexScreenAspectRatioSchema = z.union([
   positiveFiniteNumberSchema,

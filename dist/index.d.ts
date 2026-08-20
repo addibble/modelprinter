@@ -11,7 +11,7 @@ declare const flexScreenOrientationSchema: z.ZodEnum<{
     foldedToRightAngleAboveBoard: "foldedToRightAngleAboveBoard";
     foldedToRightAngleBelowBoard: "foldedToRightAngleBelowBoard";
 }>;
-declare const flexScreenAspectRatioSchema: z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>;
+declare const flexScreenAspectRatioSchema: z.ZodUnion<readonly [z.ZodNumber, z.ZodPipe<z.ZodString, z.ZodTransform<`${number}:${number}`, string>>, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>;
 /**
  * Canonical, renderer-independent properties for a parameterized FlexScreen.
  * Every length accepts either millimeters as a number or a unit-bearing string
@@ -21,8 +21,8 @@ declare const flexScreenModelPropsSchema: z.ZodObject<{
     width: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     height: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     diagonal: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
-    aspectRatio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
-    ratio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
+    aspectRatio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodPipe<z.ZodString, z.ZodTransform<`${number}:${number}`, string>>, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
+    ratio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodPipe<z.ZodString, z.ZodTransform<`${number}:${number}`, string>>, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
     defaultDiagonal: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     orientation: z.ZodOptional<z.ZodEnum<{
         sitsFlat: "sitsFlat";
@@ -102,8 +102,8 @@ declare const flexScreenModelDefinitionSchema: z.ZodObject<{
     width: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     height: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     diagonal: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
-    aspectRatio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
-    ratio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
+    aspectRatio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodPipe<z.ZodString, z.ZodTransform<`${number}:${number}`, string>>, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
+    ratio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodPipe<z.ZodString, z.ZodTransform<`${number}:${number}`, string>>, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
     defaultDiagonal: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     orientation: z.ZodOptional<z.ZodEnum<{
         sitsFlat: "sitsFlat";
@@ -181,8 +181,8 @@ declare const modelDefinitionSchema: z.ZodObject<{
     width: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     height: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     diagonal: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
-    aspectRatio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
-    ratio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
+    aspectRatio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodPipe<z.ZodString, z.ZodTransform<`${number}:${number}`, string>>, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
+    ratio: z.ZodOptional<z.ZodUnion<readonly [z.ZodNumber, z.ZodPipe<z.ZodString, z.ZodTransform<`${number}:${number}`, string>>, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>]>>;
     defaultDiagonal: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     orientation: z.ZodOptional<z.ZodEnum<{
         sitsFlat: "sitsFlat";
@@ -276,8 +276,8 @@ declare const string: (value: string) => {
         width?: number | undefined;
         height?: number | undefined;
         diagonal?: number | undefined;
-        aspectRatio?: string | number | [number, number] | undefined;
-        ratio?: string | number | [number, number] | undefined;
+        aspectRatio?: number | `${number}:${number}` | [number, number] | undefined;
+        ratio?: number | `${number}:${number}` | [number, number] | undefined;
         defaultDiagonal?: number | undefined;
         orientation?: "sitsFlat" | "sitsFlatBelowBoard" | "foldedToFaceAboveBoard" | "foldedToFaceBelowBoard" | "foldedToRightAngleAboveBoard" | "foldedToRightAngleBelowBoard" | undefined;
         sitsFlat?: boolean | undefined;
@@ -352,8 +352,8 @@ declare const modelprinter: {
             width?: number | undefined;
             height?: number | undefined;
             diagonal?: number | undefined;
-            aspectRatio?: string | number | [number, number] | undefined;
-            ratio?: string | number | [number, number] | undefined;
+            aspectRatio?: number | `${number}:${number}` | [number, number] | undefined;
+            ratio?: number | `${number}:${number}` | [number, number] | undefined;
             defaultDiagonal?: number | undefined;
             orientation?: "sitsFlat" | "sitsFlatBelowBoard" | "foldedToFaceAboveBoard" | "foldedToFaceBelowBoard" | "foldedToRightAngleAboveBoard" | "foldedToRightAngleBelowBoard" | undefined;
             sitsFlat?: boolean | undefined;
@@ -430,8 +430,8 @@ declare const mp: {
             width?: number | undefined;
             height?: number | undefined;
             diagonal?: number | undefined;
-            aspectRatio?: string | number | [number, number] | undefined;
-            ratio?: string | number | [number, number] | undefined;
+            aspectRatio?: number | `${number}:${number}` | [number, number] | undefined;
+            ratio?: number | `${number}:${number}` | [number, number] | undefined;
             defaultDiagonal?: number | undefined;
             orientation?: "sitsFlat" | "sitsFlatBelowBoard" | "foldedToFaceAboveBoard" | "foldedToFaceBelowBoard" | "foldedToRightAngleAboveBoard" | "foldedToRightAngleBelowBoard" | undefined;
             sitsFlat?: boolean | undefined;
