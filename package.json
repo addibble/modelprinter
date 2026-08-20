@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --sourcemap --clean",
-    "prepare": "tsup src/index.ts --format esm --dts --sourcemap --clean",
+    "prepack": "tsup src/index.ts --format esm --dts --sourcemap --clean",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "format": "biome format --write .",
