@@ -1,6 +1,6 @@
 {
   "name": "@tscircuit/modelprinter",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Parametric CAD model strings and schemas for tscircuit",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,7 +24,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tscircuit/modelprinter.git"
+    "url": "git+https://github.com/tscircuit/modelprinter.git"
   },
   "publishConfig": {
     "access": "public"
