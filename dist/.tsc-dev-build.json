@@ -1,0 +1,28 @@
+{
+  "repo": "modelprinter",
+  "pkg": "@tscircuit/modelprinter",
+  "profile": "full",
+  "key": "dc302542a69fa60dcbd881a53d0f2220018b0d948aa12e850aea2e4b85dbc7b2",
+  "version": "0.0.2-local.full.dc302542a69f",
+  "result": "built",
+  "builtAt": "2026-08-29T22:03:59.554Z",
+  "checkedAt": "2026-08-29T22:03:59.555Z",
+  "artifactDigest": "ce9472ddb84fce4cd4abaa9b467c0b1b0cb5dc9c659197ded2f0bd854bbc94c5",
+  "declarations": "current",
+  "skippedSteps": [],
+  "steps": [
+    {
+      "script": "build",
+      "command": "tsup src/index.ts --format esm --dts --sourcemap --clean",
+      "ms": 1198
+    }
+  ],
+  "deps": {},
+  "inputCount": 11,
+  "toolchain": {
+    "bun": "1.3.14",
+    "node": "v26.0.0",
+    "platform": "darwin",
+    "arch": "arm64"
+  }
+}

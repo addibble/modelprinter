@@ -177,7 +177,177 @@ declare const flexScreenModelDefinitionSchema: z.ZodObject<{
     fn: z.ZodLiteral<"flexscreen">;
 }, z.core.$strict>;
 type FlexScreenModelDefinition = z.infer<typeof flexScreenModelDefinitionSchema>;
-declare const modelDefinitionSchema: z.ZodObject<{
+
+/**
+ * Assembly hardware model families: the fasteners that hold a board into an
+ * enclosure.
+ *
+ * This module is the *grammar* only. It says what `screw_m3_l8_buttonhead`
+ * means, not how wide an M3 button head is -- those dimension tables live in
+ * `jscad-assembly-hardware`, the same way `flexscreen`'s schema lives here
+ * while `DEFAULT_DIAGONAL` and its mesh live in `jscad-electronics`.
+ *
+ * So every property here is either stated by the string or absent. Nothing is
+ * defaulted to a dimension, because a default that lives in two layers is a
+ * default that will eventually disagree with itself.
+ */
+/**
+ * Nominal metric threads, lowercase.
+ *
+ * Matches `@tscircuit/props`' `assemblyThreads` exactly -- this is the same
+ * authoring vocabulary reaching the model string. `create-fdm-enclosure` spells
+ * them uppercase and converts at its own boundary.
+ */
+declare const fastenerThreads: readonly ["m2", "m2.5", "m3", "m4", "m5"];
+type FastenerThread = (typeof fastenerThreads)[number];
+declare const fastenerThreadSchema: z.ZodEnum<{
+    m2: "m2";
+    "m2.5": "m2.5";
+    m3: "m3";
+    m4: "m4";
+    m5: "m5";
+}>;
+/**
+ * Head shapes, which the enclosure needs in order to cut a recess.
+ *
+ * Drive type (phillips, torx, hex) is deliberately absent: it is chosen by
+ * whoever assembles the device and changes no geometry we model.
+ */
+declare const screwHeads: readonly ["buttonhead", "panhead", "flathead", "countersunk", "socketcap", "hexflange"];
+type ScrewHead = (typeof screwHeads)[number];
+declare const screwHeadSchema: z.ZodEnum<{
+    buttonhead: "buttonhead";
+    panhead: "panhead";
+    flathead: "flathead";
+    countersunk: "countersunk";
+    socketcap: "socketcap";
+    hexflange: "hexflange";
+}>;
+declare const screwModelDefinitionSchema: z.ZodObject<{
+    thread: z.ZodEnum<{
+        m2: "m2";
+        "m2.5": "m2.5";
+        m3: "m3";
+        m4: "m4";
+        m5: "m5";
+    }>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    head: z.ZodOptional<z.ZodEnum<{
+        buttonhead: "buttonhead";
+        panhead: "panhead";
+        flathead: "flathead";
+        countersunk: "countersunk";
+        socketcap: "socketcap";
+        hexflange: "hexflange";
+    }>>;
+    fn: z.ZodLiteral<"screw">;
+}, z.core.$strict>;
+declare const boltModelDefinitionSchema: z.ZodObject<{
+    thread: z.ZodEnum<{
+        m2: "m2";
+        "m2.5": "m2.5";
+        m3: "m3";
+        m4: "m4";
+        m5: "m5";
+    }>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    head: z.ZodOptional<z.ZodEnum<{
+        buttonhead: "buttonhead";
+        panhead: "panhead";
+        flathead: "flathead";
+        countersunk: "countersunk";
+        socketcap: "socketcap";
+        hexflange: "hexflange";
+    }>>;
+    fn: z.ZodLiteral<"bolt">;
+}, z.core.$strict>;
+declare const heatsetinsertModelDefinitionSchema: z.ZodObject<{
+    fn: z.ZodLiteral<"heatsetinsert">;
+    thread: z.ZodEnum<{
+        m2: "m2";
+        "m2.5": "m2.5";
+        m3: "m3";
+        m4: "m4";
+        m5: "m5";
+    }>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+}, z.core.$strict>;
+/**
+ * A spacer has no thread and no catalogue -- it is fully described by three
+ * diameters and a length, so it is stated outright rather than looked up.
+ */
+declare const spacerModelDefinitionSchema: z.ZodObject<{
+    fn: z.ZodLiteral<"spacer">;
+    outerDiameter: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    innerDiameter: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+}, z.core.$strict>;
+type ScrewModelDefinition = z.infer<typeof screwModelDefinitionSchema>;
+type BoltModelDefinition = z.infer<typeof boltModelDefinitionSchema>;
+type HeatsetInsertModelDefinition = z.infer<typeof heatsetinsertModelDefinitionSchema>;
+type SpacerModelDefinition = z.infer<typeof spacerModelDefinitionSchema>;
+declare const hardwareModelDefinitionSchema: z.ZodUnion<readonly [z.ZodObject<{
+    thread: z.ZodEnum<{
+        m2: "m2";
+        "m2.5": "m2.5";
+        m3: "m3";
+        m4: "m4";
+        m5: "m5";
+    }>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    head: z.ZodOptional<z.ZodEnum<{
+        buttonhead: "buttonhead";
+        panhead: "panhead";
+        flathead: "flathead";
+        countersunk: "countersunk";
+        socketcap: "socketcap";
+        hexflange: "hexflange";
+    }>>;
+    fn: z.ZodLiteral<"screw">;
+}, z.core.$strict>, z.ZodObject<{
+    thread: z.ZodEnum<{
+        m2: "m2";
+        "m2.5": "m2.5";
+        m3: "m3";
+        m4: "m4";
+        m5: "m5";
+    }>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    head: z.ZodOptional<z.ZodEnum<{
+        buttonhead: "buttonhead";
+        panhead: "panhead";
+        flathead: "flathead";
+        countersunk: "countersunk";
+        socketcap: "socketcap";
+        hexflange: "hexflange";
+    }>>;
+    fn: z.ZodLiteral<"bolt">;
+}, z.core.$strict>, z.ZodObject<{
+    fn: z.ZodLiteral<"heatsetinsert">;
+    thread: z.ZodEnum<{
+        m2: "m2";
+        "m2.5": "m2.5";
+        m3: "m3";
+        m4: "m4";
+        m5: "m5";
+    }>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+}, z.core.$strict>, z.ZodObject<{
+    fn: z.ZodLiteral<"spacer">;
+    outerDiameter: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    innerDiameter: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+}, z.core.$strict>]>;
+type HardwareModelDefinition = z.infer<typeof hardwareModelDefinitionSchema>;
+
+/**
+ * Every model family modelprinter knows.
+ *
+ * A plain union rather than `z.discriminatedUnion`: the flexscreen schema
+ * carries a `.superRefine`, which makes it a ZodEffects, and a discriminated
+ * union will not accept one.
+ */
+declare const modelDefinitionSchema: z.ZodUnion<readonly [z.ZodObject<{
     width: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     height: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     diagonal: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
@@ -254,7 +424,58 @@ declare const modelDefinitionSchema: z.ZodObject<{
         z: z.ZodOptional<z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>>;
     }, z.core.$strict>>;
     fn: z.ZodLiteral<"flexscreen">;
-}, z.core.$strict>;
+}, z.core.$strict>, z.ZodUnion<readonly [z.ZodObject<{
+    thread: z.ZodEnum<{
+        m2: "m2";
+        "m2.5": "m2.5";
+        m3: "m3";
+        m4: "m4";
+        m5: "m5";
+    }>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    head: z.ZodOptional<z.ZodEnum<{
+        buttonhead: "buttonhead";
+        panhead: "panhead";
+        flathead: "flathead";
+        countersunk: "countersunk";
+        socketcap: "socketcap";
+        hexflange: "hexflange";
+    }>>;
+    fn: z.ZodLiteral<"screw">;
+}, z.core.$strict>, z.ZodObject<{
+    thread: z.ZodEnum<{
+        m2: "m2";
+        "m2.5": "m2.5";
+        m3: "m3";
+        m4: "m4";
+        m5: "m5";
+    }>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    head: z.ZodOptional<z.ZodEnum<{
+        buttonhead: "buttonhead";
+        panhead: "panhead";
+        flathead: "flathead";
+        countersunk: "countersunk";
+        socketcap: "socketcap";
+        hexflange: "hexflange";
+    }>>;
+    fn: z.ZodLiteral<"bolt">;
+}, z.core.$strict>, z.ZodObject<{
+    fn: z.ZodLiteral<"heatsetinsert">;
+    thread: z.ZodEnum<{
+        m2: "m2";
+        "m2.5": "m2.5";
+        m3: "m3";
+        m4: "m4";
+        m5: "m5";
+    }>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+}, z.core.$strict>, z.ZodObject<{
+    fn: z.ZodLiteral<"spacer">;
+    outerDiameter: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    innerDiameter: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+    length: z.ZodPipe<z.ZodUnion<readonly [z.ZodNumber, z.ZodString]>, z.ZodTransform<number, string | number>>;
+}, z.core.$strict>]>]>;
 type ModelDefinition = z.infer<typeof modelDefinitionSchema>;
 
 type RawModelprinterParams = {
@@ -341,6 +562,25 @@ declare const string: (value: string) => {
             y?: number | undefined;
             z?: number | undefined;
         } | undefined;
+    } | {
+        fn: "spacer";
+        outerDiameter: number;
+        innerDiameter: number;
+        length: number;
+    } | {
+        thread: "m2" | "m2.5" | "m3" | "m4" | "m5";
+        length: number;
+        fn: "screw";
+        head?: "buttonhead" | "panhead" | "flathead" | "countersunk" | "socketcap" | "hexflange" | undefined;
+    } | {
+        thread: "m2" | "m2.5" | "m3" | "m4" | "m5";
+        length: number;
+        fn: "bolt";
+        head?: "buttonhead" | "panhead" | "flathead" | "countersunk" | "socketcap" | "hexflange" | undefined;
+    } | {
+        fn: "heatsetinsert";
+        thread: "m2" | "m2.5" | "m3" | "m4" | "m5";
+        length: number;
     };
 };
 declare const parseModelString: (value: string) => ModelDefinition;
@@ -417,6 +657,25 @@ declare const modelprinter: {
                 y?: number | undefined;
                 z?: number | undefined;
             } | undefined;
+        } | {
+            fn: "spacer";
+            outerDiameter: number;
+            innerDiameter: number;
+            length: number;
+        } | {
+            thread: "m2" | "m2.5" | "m3" | "m4" | "m5";
+            length: number;
+            fn: "screw";
+            head?: "buttonhead" | "panhead" | "flathead" | "countersunk" | "socketcap" | "hexflange" | undefined;
+        } | {
+            thread: "m2" | "m2.5" | "m3" | "m4" | "m5";
+            length: number;
+            fn: "bolt";
+            head?: "buttonhead" | "panhead" | "flathead" | "countersunk" | "socketcap" | "hexflange" | undefined;
+        } | {
+            fn: "heatsetinsert";
+            thread: "m2" | "m2.5" | "m3" | "m4" | "m5";
+            length: number;
         };
     };
     getModelNames: () => string[];
@@ -495,9 +754,28 @@ declare const mp: {
                 y?: number | undefined;
                 z?: number | undefined;
             } | undefined;
+        } | {
+            fn: "spacer";
+            outerDiameter: number;
+            innerDiameter: number;
+            length: number;
+        } | {
+            thread: "m2" | "m2.5" | "m3" | "m4" | "m5";
+            length: number;
+            fn: "screw";
+            head?: "buttonhead" | "panhead" | "flathead" | "countersunk" | "socketcap" | "hexflange" | undefined;
+        } | {
+            thread: "m2" | "m2.5" | "m3" | "m4" | "m5";
+            length: number;
+            fn: "bolt";
+            head?: "buttonhead" | "panhead" | "flathead" | "countersunk" | "socketcap" | "hexflange" | undefined;
+        } | {
+            fn: "heatsetinsert";
+            thread: "m2" | "m2.5" | "m3" | "m4" | "m5";
+            length: number;
         };
     };
     getModelNames: () => string[];
 };
 
-export { type FlexScreenAspectRatio, type FlexScreenModelDefinition, type FlexScreenModelProps, type FlexScreenModelPropsInput, type FlexScreenOrientation, type ModelDefinition, type RawModelprinterParams, flexScreenAspectRatioSchema, flexScreenModelDefinitionSchema, flexScreenModelPropsSchema, flexScreenOrientationSchema, modelDefinitionSchema, modelLengthSchema, modelprinter, mp, nonnegativeModelLengthSchema, parseModelString, parseModelStringParams, positiveModelLengthSchema, string };
+export { type BoltModelDefinition, type FastenerThread, type FlexScreenAspectRatio, type FlexScreenModelDefinition, type FlexScreenModelProps, type FlexScreenModelPropsInput, type FlexScreenOrientation, type HardwareModelDefinition, type HeatsetInsertModelDefinition, type ModelDefinition, type RawModelprinterParams, type ScrewHead, type ScrewModelDefinition, type SpacerModelDefinition, boltModelDefinitionSchema, fastenerThreadSchema, fastenerThreads, flexScreenAspectRatioSchema, flexScreenModelDefinitionSchema, flexScreenModelPropsSchema, flexScreenOrientationSchema, hardwareModelDefinitionSchema, heatsetinsertModelDefinitionSchema, modelDefinitionSchema, modelLengthSchema, modelprinter, mp, nonnegativeModelLengthSchema, parseModelString, parseModelStringParams, positiveModelLengthSchema, screwHeadSchema, screwHeads, screwModelDefinitionSchema, spacerModelDefinitionSchema, string };

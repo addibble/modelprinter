@@ -153,7 +153,62 @@ var flexScreenModelDefinitionSchema = z.object({
     });
   });
 });
-var modelDefinitionSchema = flexScreenModelDefinitionSchema;
+
+// src/hardware-schema.ts
+import { z as z2 } from "zod";
+var fastenerThreads = ["m2", "m2.5", "m3", "m4", "m5"];
+var fastenerThreadSchema = z2.enum(fastenerThreads);
+var screwHeads = [
+  "buttonhead",
+  "panhead",
+  "flathead",
+  "countersunk",
+  "socketcap",
+  "hexflange"
+];
+var screwHeadSchema = z2.enum(screwHeads);
+var threadedFastenerShape = {
+  thread: fastenerThreadSchema,
+  /** Nominal designated length. Overall for countersunk, under-head otherwise. */
+  length: positiveModelLengthSchema,
+  /** Absent means the geometry layer picks its default. */
+  head: screwHeadSchema.optional()
+};
+var screwModelDefinitionSchema = z2.object({ fn: z2.literal("screw"), ...threadedFastenerShape }).strict();
+var boltModelDefinitionSchema = z2.object({ fn: z2.literal("bolt"), ...threadedFastenerShape }).strict();
+var heatsetinsertModelDefinitionSchema = z2.object({
+  fn: z2.literal("heatsetinsert"),
+  thread: fastenerThreadSchema,
+  /** Length along the axis; the outside diameter comes from the series. */
+  length: positiveModelLengthSchema
+}).strict();
+var spacerModelDefinitionSchema = z2.object({
+  fn: z2.literal("spacer"),
+  outerDiameter: positiveModelLengthSchema,
+  innerDiameter: positiveModelLengthSchema,
+  length: positiveModelLengthSchema
+}).strict().superRefine((model, context) => {
+  if (model.innerDiameter >= model.outerDiameter) {
+    context.addIssue({
+      code: "custom",
+      message: "A spacer's innerDiameter must be smaller than its outerDiameter",
+      path: ["innerDiameter"]
+    });
+  }
+});
+var hardwareModelDefinitionSchema = z2.union([
+  screwModelDefinitionSchema,
+  boltModelDefinitionSchema,
+  heatsetinsertModelDefinitionSchema,
+  spacerModelDefinitionSchema
+]);
+
+// src/model-definition.ts
+import { z as z3 } from "zod";
+var modelDefinitionSchema = z3.union([
+  flexScreenModelDefinitionSchema,
+  hardwareModelDefinitionSchema
+]);
 
 // src/parse-model-string.ts
 var parsePart = (part) => {
@@ -375,9 +430,129 @@ var parseFlexScreenModelParams = (rawParams) => {
   return flexScreenModelDefinitionSchema.parse({ fn: "flexscreen", ...props });
 };
 
+// src/parse-hardware-model-string.ts
+var headAliases = {
+  ...Object.fromEntries(screwHeads.map((head) => [head, head])),
+  button: "buttonhead",
+  pan: "panhead",
+  flat: "flathead",
+  csk: "countersunk",
+  socket: "socketcap",
+  cap: "socketcap",
+  hex: "hexflange"
+};
+var bare = (value, token) => {
+  if (value !== true && value !== void 0) {
+    throw new Error(`Hardware model token "${token}" does not take a value`);
+  }
+};
+var valued = (value, token, fn) => {
+  if (value === true || value === void 0) {
+    throw new Error(`Hardware model token "${token}" needs a value in "${fn}"`);
+  }
+  return String(value);
+};
+var parseThreadedFastener = (params) => {
+  let thread;
+  let length;
+  let head;
+  for (const [token, value] of Object.entries(params)) {
+    if (token === "fn" || token === "string" || token === params.fn) continue;
+    if (token === "num_pins") continue;
+    if (token === "m") {
+      thread = `m${valued(value, token, params.fn)}`;
+      continue;
+    }
+    if (token === "l") {
+      length = valued(value, token, params.fn);
+      continue;
+    }
+    const aliased = headAliases[token];
+    if (aliased) {
+      bare(value, token);
+      if (head && head !== aliased) {
+        throw new Error(`A ${params.fn} can only have one head shape`);
+      }
+      head = aliased;
+      continue;
+    }
+    throw new Error(`Unknown ${params.fn} model token "${token}"`);
+  }
+  if (!thread) throw new Error(`A ${params.fn} needs a thread, e.g. "m3"`);
+  if (!length) throw new Error(`A ${params.fn} needs a length, e.g. "l8"`);
+  return { thread, length, ...head ? { head } : {} };
+};
+var parseScrewModelParams = (params) => screwModelDefinitionSchema.parse({
+  fn: "screw",
+  ...parseThreadedFastener(params)
+});
+var parseBoltModelParams = (params) => boltModelDefinitionSchema.parse({
+  fn: "bolt",
+  ...parseThreadedFastener(params)
+});
+var parseHeatsetInsertModelParams = (params) => {
+  let thread;
+  let length;
+  for (const [token, value] of Object.entries(params)) {
+    if (token === "fn" || token === "string" || token === params.fn) continue;
+    if (token === "num_pins") continue;
+    if (token === "m") {
+      thread = `m${valued(value, token, params.fn)}`;
+      continue;
+    }
+    if (token === "l") {
+      length = valued(value, token, params.fn);
+      continue;
+    }
+    throw new Error(`Unknown heatsetinsert model token "${token}"`);
+  }
+  if (!thread) throw new Error('A heatsetinsert needs a thread, e.g. "m3"');
+  if (!length) throw new Error('A heatsetinsert needs a length, e.g. "l4"');
+  return heatsetinsertModelDefinitionSchema.parse({
+    fn: "heatsetinsert",
+    thread,
+    length
+  });
+};
+var parseSpacerModelParams = (params) => {
+  let outerDiameter;
+  let innerDiameter;
+  let length;
+  for (const [token, value] of Object.entries(params)) {
+    if (token === "fn" || token === "string" || token === params.fn) continue;
+    if (token === "num_pins") continue;
+    if (token === "od") {
+      outerDiameter = valued(value, token, params.fn);
+      continue;
+    }
+    if (token === "id") {
+      innerDiameter = valued(value, token, params.fn);
+      continue;
+    }
+    if (token === "l") {
+      length = valued(value, token, params.fn);
+      continue;
+    }
+    throw new Error(`Unknown spacer model token "${token}"`);
+  }
+  if (!outerDiameter) throw new Error('A spacer needs an outer diameter, "od5"');
+  if (!innerDiameter) throw new Error('A spacer needs an inner diameter, "id3"');
+  if (!length) throw new Error('A spacer needs a length, e.g. "l6"');
+  return spacerModelDefinitionSchema.parse({
+    fn: "spacer",
+    outerDiameter,
+    innerDiameter,
+    length
+  });
+};
+
 // src/modelprinter.ts
 var modelFunctions = {
-  flexscreen: parseFlexScreenModelParams
+  flexscreen: parseFlexScreenModelParams,
+  screw: parseScrewModelParams,
+  bolt: parseBoltModelParams,
+  heatsetinsert: parseHeatsetInsertModelParams,
+  spacer: parseSpacerModelParams
 };
 var modelParamsToJson = (params) => {
   const modelFunction = modelFunctions[params.fn];
@@ -400,10 +575,15 @@ var modelprinter = {
 };
 var mp = modelprinter;
 export {
+  boltModelDefinitionSchema,
+  fastenerThreadSchema,
+  fastenerThreads,
   flexScreenAspectRatioSchema,
   flexScreenModelDefinitionSchema,
   flexScreenModelPropsSchema,
   flexScreenOrientationSchema,
+  hardwareModelDefinitionSchema,
+  heatsetinsertModelDefinitionSchema,
   modelDefinitionSchema,
   modelLengthSchema,
   modelprinter,
@@ -412,6 +592,10 @@ export {
   parseModelString,
   parseModelStringParams,
   positiveModelLengthSchema,
+  screwHeadSchema,
+  screwHeads,
+  screwModelDefinitionSchema,
+  spacerModelDefinitionSchema,
   string
 };
 //# sourceMappingURL=index.js.map

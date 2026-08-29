@@ -1,5 +1,11 @@
-import type { ModelDefinition } from "./flex-screen-schema"
+import type { ModelDefinition } from "./model-definition"
 import { parseFlexScreenModelParams } from "./parse-flex-screen-model-string"
+import {
+  parseBoltModelParams,
+  parseHeatsetInsertModelParams,
+  parseScrewModelParams,
+  parseSpacerModelParams,
+} from "./parse-hardware-model-string"
 import {
   parseModelStringParams,
   type RawModelprinterParams,
@@ -7,6 +13,10 @@ import {
 
 const modelFunctions = {
   flexscreen: parseFlexScreenModelParams,
+  screw: parseScrewModelParams,
+  bolt: parseBoltModelParams,
+  heatsetinsert: parseHeatsetInsertModelParams,
+  spacer: parseSpacerModelParams,
 }
 
 const modelParamsToJson = (params: RawModelprinterParams): ModelDefinition => {
