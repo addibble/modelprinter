@@ -42,6 +42,15 @@ export const parseModelStringParams = (
     if (!part) throw new Error("Model strings cannot contain empty tokens")
     const parsed = parsePart(part)
     if (!parsed) throw new Error(`Invalid model string token "${part}"`)
+    // A repeated token used to overwrite the earlier one, so `screw_m3_m4_l8`
+    // silently became an M4 and `screw_m3_l8_l10` a 10mm screw. A model string
+    // is a specification: two answers to one question is a mistake to report,
+    // not a precedence rule to apply.
+    if (parsed.fn in params) {
+      throw new Error(
+        `Model string "${normalizedDefinition}" gives "${parsed.fn}" twice`,
+      )
+    }
     params[parsed.fn] = parsed.value ?? true
   }
 
