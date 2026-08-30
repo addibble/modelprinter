@@ -56,7 +56,15 @@ const parseThreadedFastener = (
 
   for (const [token, value] of Object.entries(params)) {
     if (token === "fn" || token === "string" || token === params.fn) continue
-    if (token === "num_pins") continue
+    // A pin count is a footprinter idea -- it arrives from a numeric suffix on
+    // the family token, so `screw3_m3_l8` parses as a 3-pin screw. Skipping it
+    // let that spelling through as an ordinary screw; hardware has no pins, so
+    // it is a malformed string and says so.
+    if (token === "num_pins") {
+      throw new Error(
+        `A ${params.fn} takes no pin count, but "${params.string}" gives one`,
+      )
+    }
 
     if (token === "m") {
       thread = `m${valued(value, token, params.fn)}`
@@ -107,7 +115,15 @@ export const parseHeatsetInsertModelParams = (
 
   for (const [token, value] of Object.entries(params)) {
     if (token === "fn" || token === "string" || token === params.fn) continue
-    if (token === "num_pins") continue
+    // A pin count is a footprinter idea -- it arrives from a numeric suffix on
+    // the family token, so `screw3_m3_l8` parses as a 3-pin screw. Skipping it
+    // let that spelling through as an ordinary screw; hardware has no pins, so
+    // it is a malformed string and says so.
+    if (token === "num_pins") {
+      throw new Error(
+        `A ${params.fn} takes no pin count, but "${params.string}" gives one`,
+      )
+    }
     if (token === "m") {
       thread = `m${valued(value, token, params.fn)}`
       continue
@@ -137,7 +153,15 @@ export const parseSpacerModelParams = (
 
   for (const [token, value] of Object.entries(params)) {
     if (token === "fn" || token === "string" || token === params.fn) continue
-    if (token === "num_pins") continue
+    // A pin count is a footprinter idea -- it arrives from a numeric suffix on
+    // the family token, so `screw3_m3_l8` parses as a 3-pin screw. Skipping it
+    // let that spelling through as an ordinary screw; hardware has no pins, so
+    // it is a malformed string and says so.
+    if (token === "num_pins") {
+      throw new Error(
+        `A ${params.fn} takes no pin count, but "${params.string}" gives one`,
+      )
+    }
     if (token === "od") {
       outerDiameter = valued(value, token, params.fn)
       continue

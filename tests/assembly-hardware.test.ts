@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { mp, parseModelString } from "../src"
+import { mp, parseModelString, parseModelStringParams } from "../src"
 
 describe("assembly hardware model strings", () => {
   test("parses the families the RFC names", () => {
@@ -85,5 +85,46 @@ describe("assembly hardware model strings", () => {
     )
     expect(() => parseModelString("spacer_od3_id5_l6")).toThrow()
     expect(() => parseModelString("screw_m3_l0")).toThrow()
+  })
+})
+
+/**
+ * A model string is a specification, so two answers to one question is a
+ * mistake to report rather than a precedence rule to apply.
+ *
+ * Both spellings below used to parse: the later token overwrote the earlier
+ * one, and a numeric suffix on the family token became a pin count that the
+ * hardware parsers then skipped. Each produced a real part that was not the one
+ * written down -- an M4 from a string that says m3, a 10mm from one that says 8.
+ */
+describe("malformed hardware strings are refused, not silently resolved", () => {
+  test("a repeated thread is refused rather than taking the last", () => {
+    expect(() => parseModelStringParams("screw_m3_m4_l8")).toThrow(
+      /gives "m" twice/,
+    )
+  })
+
+  test("a repeated length is refused rather than taking the last", () => {
+    expect(() => parseModelStringParams("screw_m3_l8_l10")).toThrow(
+      /gives "l" twice/,
+    )
+  })
+
+  test("a pin count on a hardware family is refused", () => {
+    // `screw3` reads as a 3-pin screw via the footprinter-style numeric suffix.
+    expect(() => parseModelString("screw3_m3_l8")).toThrow(/takes no pin count/)
+    expect(() => parseModelString("spacer7_od5_id3_l6")).toThrow(
+      /takes no pin count/,
+    )
+  })
+
+  test("well-formed strings still parse", () => {
+    const screw = parseModelString("screw_m3_l8mm_socketcap")
+    const insert = parseModelString("heatsetinsert_m3_l5.7mm")
+    expect(screw.fn).toBe("screw")
+    expect(insert.fn).toBe("heatsetinsert")
+    if (screw.fn !== "screw" || insert.fn !== "heatsetinsert") return
+    expect(screw.thread).toBe("m3")
+    expect(insert.thread).toBe("m3")
   })
 })
