@@ -5,7 +5,7 @@ export type RawModelprinterParams = {
 }
 
 const parsePart = (part: string) => {
-  const match = part.match(/^([a-zA-Z]+)([\(\d\.\+\-].*)?$/)
+  const match = part.match(/^([a-zA-Z]+)([(\d.+-].*)?$/)
   if (!match?.[1]) return undefined
   return {
     fn: match[1].toLowerCase(),
