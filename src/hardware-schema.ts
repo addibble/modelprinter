@@ -18,9 +18,9 @@ import { positiveModelLengthSchema } from "./flex-screen-schema"
 /**
  * Nominal metric threads, lowercase.
  *
- * Matches `@tscircuit/props`' `assemblyThreads` exactly -- this is the same
- * authoring vocabulary reaching the model string. `create-fdm-enclosure` spells
- * them uppercase and converts at its own boundary.
+ * Props forwards a required nonempty string without maintaining this vocabulary.
+ * The mechanical resolver validates the authored spelling against this grammar
+ * before looking up catalogue dimensions; it does not normalize case.
  */
 export const fastenerThreads = ["m2", "m2.5", "m3", "m4", "m5"] as const
 export type FastenerThread = (typeof fastenerThreads)[number]

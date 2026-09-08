@@ -14,6 +14,13 @@ const parsePart = (part: string) => {
   }
 }
 
+const hardwareFunctionsWithUniqueTokens = new Set([
+  "screw",
+  "bolt",
+  "heatsetinsert",
+  "spacer",
+])
+
 /**
  * Parses a model string into the same sort of raw builder parameters exposed
  * by `fp.string(...).params()`. Function-specific validation happens in
@@ -47,7 +54,7 @@ export const parseModelStringParams = (
     // silently became an M4 and `screw_m3_l8_l10` a 10mm screw. A model string
     // is a specification: two answers to one question is a mistake to report,
     // not a precedence rule to apply.
-    if (parsed.fn in params) {
+    if (hardwareFunctionsWithUniqueTokens.has(fn) && parsed.fn in params) {
       throw new Error(
         `Model string "${normalizedDefinition}" gives "${parsed.fn}" twice`,
       )
