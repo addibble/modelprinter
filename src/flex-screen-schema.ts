@@ -211,7 +211,3 @@ export const flexScreenModelDefinitionSchema = z
 export type FlexScreenModelDefinition = z.infer<
   typeof flexScreenModelDefinitionSchema
 >
-
-// This alias becomes a discriminated union as additional model families land.
-export const modelDefinitionSchema = flexScreenModelDefinitionSchema
-export type ModelDefinition = z.infer<typeof modelDefinitionSchema>

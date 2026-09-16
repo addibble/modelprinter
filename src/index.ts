@@ -1,3 +1,5 @@
 export * from "./flex-screen-schema"
+export * from "./hardware-schema"
+export * from "./model-definition"
 export * from "./parse-model-string"
 export * from "./modelprinter"

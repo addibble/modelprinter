@@ -77,6 +77,18 @@ The shorthand `distance` is only valid with `foldsabove` or `foldsbelow`, and
 maps to the corresponding above/below property. Unknown tokens throw rather
 than being ignored.
 
+## Assembly hardware
+
+`screw_m3_l8_buttonhead`, `bolt_m3_l12_socketcap`,
+`heatsetinsert_m3_l5.7`, and `spacer_od6_id3.2_l4` use the same API.
+Threads are `m2`, `m2.5`, `m3`, `m4`, and `m5`; lengths accept units such as
+`l0.8cm`. Duplicate specifications and unknown modifiers are rejected.
+
+The exported hardware schemas define grammar only. An omitted screw head stays
+omitted; `@tscircuit/jscad-assembly-hardware` owns catalogue availability,
+physical dimensions, solids, and defaults. FDM clearances belong to the enclosure
+solver, not to this grammar.
+
 ## Development
 
 ```sh
